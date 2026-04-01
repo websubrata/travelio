@@ -1,0 +1,467 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.toupPackagesShdow {
+  box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
+}
+
+@font-face {
+  font-family: "ArcaMajora";
+  font-style: normal;
+  font-weight: 800;
+  src: local(""),
+    url("/arca-majora-3-cufonfonts/ArcaMajora3-Bold.otf") format("otf");
+}
+
+@font-face {
+  font-family: "Bebas";
+  font-style: normal;
+  font-weight: 900;
+  src: local(""), url("../public/fonts//Bebas-Regular.otf") format("otf");
+}
+
+.testimonialScroll::-webkit-scrollbar {
+  width: 2px; /* width of the entire scrollbar */
+}
+
+.testimonialScroll::-webkit-scrollbar-track {
+  background: #4d6093; /* color of the tracking area */
+}
+
+.testimonialScroll::-webkit-scrollbar-thumb {
+  background-color: #fab819; /* color of the scroll thumb */
+  /* border-radius: 1px; roundness of the scroll thumb */
+}
+
+.blogItemShdow {
+  box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+}
+
+.searchBoxShdow {
+  box-shadow: rgba(60, 64, 67, 0.3) 0px 1px 2px 0px,
+    rgba(60, 64, 67, 0.15) 0px 1px 3px 1px;
+}
+
+.banner .img {
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
+  position: absolute;
+}
+
+.banner .img.active {
+  opacity: 1;
+}
+
+.servicesShdow {
+  box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
+}
+
+.homeInfoSection {
+  box-shadow: rgba(60, 64, 67, 0.3) 0px 1px 2px 0px,
+    rgba(60, 64, 67, 0.15) 0px 1px 3px 1px;
+}
+
+.tourInfo h2,
+h3,
+h4 {
+  font-weight: bold;
+  font-size: larger;
+  padding: 12px 0 0 0;
+}
+
+.tourInfo ul {
+  list-style-type: disc;
+  padding-left: 20px;
+}
+
+.tourInfo li {
+  font-size: 14px;
+}
+
+.inner:before,
+.inner:after {
+  position: absolute;
+  top: 0;
+  width: 110px;
+  height: 100%;
+  content: "";
+  z-index: 2;
+}
+
+.inner:before {
+  left: 0;
+  background: linear-gradient(
+    to left,
+    rgba(255, 255, 255, 0),
+    rgb(255, 255, 255)
+  );
+}
+
+.inner:after {
+  right: 0;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0),
+    rgb(255, 255, 255)
+  );
+}
+
+@media only screen and (max-width: 639px) {
+  .inner:before,
+  .inner:after {
+    width: 0px;
+  }
+}
+
+.testimonialBg {
+  background: rgb(232, 161, 15);
+  background: linear-gradient(
+    49deg,
+    rgba(232, 161, 15, 1) 44%,
+    rgba(249, 87, 198, 1) 97%
+  );
+}
+
+.source-sans-3-200 {
+  font-family: "Source Sans 3", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 200;
+  font-style: normal;
+}
+
+.source-sans-3-300 {
+  font-family: "Source Sans 3", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 300;
+  font-style: normal;
+}
+
+.source-sans-3-400 {
+  font-family: "Source Sans 3", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.source-sans-3-500 {
+  font-family: "Source Sans 3", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 500;
+  font-style: normal;
+}
+
+.source-sans-3-600 {
+  font-family: "Source Sans 3", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 600;
+  font-style: normal;
+}
+
+.source-sans-3-700 {
+  font-family: "Source Sans 3", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 700;
+  font-style: normal;
+}
+
+.source-sans-3-800 {
+  font-family: "Source Sans 3", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 800;
+  font-style: normal;
+}
+
+.source-sans-3-900 {
+  font-family: "Source Sans 3", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 900;
+  font-style: normal;
+}
+
+.bebas-neue-regular {
+  font-family: "Bebas Neue", sans-serif;
+  font-weight: 600;
+  font-style: normal;
+}
+
+.aboutBottomBanner {
+  background-image: url("/aboutBottomImage.webp");
+  background-position: center;
+  background-size: cover;
+}
+
+/* Hide the original checkbox */
+input[type="checkbox"] {
+  appearance: none;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  border: 1px solid #00aeff;
+  border-radius: 5px;
+}
+
+/* Custom checkbox design */
+input[type="checkbox"]::before {
+  content: "✔";
+  color: white;
+  display: block;
+  width: 15px;
+  height: 15px;
+  display: flex;
+  padding-top: 1px;
+  align-items: center;
+  justify-content: center;
+  background-color: #00aeff;
+  border-radius: 2px;
+  /* clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); */
+  transform: scale(0);
+  transition: transform 0.3s;
+}
+
+/* Show the checkmark when checkbox is checked */
+input[type="checkbox"]:checked::before {
+  transform: scale(1);
+}
+
+.blinkAnimation {
+  animation: blinkAnimation 2.1s linear infinite;
+}
+
+@keyframes blinkAnimation {
+  0% {
+    opacity: 0;
+    /* color: rgb(219, 91, 91); */
+  }
+
+  50% {
+    opacity: 1;
+    /* color: rgb(98, 60, 202); */
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+.messageShape {
+  border-top-left-radius: 30px;
+  border-top-right-radius: 30px;
+  border-bottom-left-radius: 30px;
+}
+
+.popupAnimation {
+  animation: popupAnimaion 600ms ease-in-out;
+}
+
+@keyframes popupAnimaion {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+.formInputShdow {
+  box-shadow: rgba(0, 0, 0, 0.12) 0px 1px 3px, rgba(0, 0, 0, 0.24) 0px 1px 2px;
+}
+
+.gridRes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+table,
+tr,
+th,
+td {
+  border: 1px solid gray;
+}
+
+th,
+td {
+  padding: 12px;
+  text-align: center;
+}
+
+.linkStyle {
+  color: #0066ff;
+  font-weight: 600;
+}
+
+/* Button Style For Tour Package Start */
+
+.buttonToTourPackage {
+  width: 420px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 5px;
+  background-color: #ffea00;
+  border-radius: 30px;
+  color: rgb(19, 19, 19);
+  font-weight: 800;
+  font-size: 16px;
+  border: none;
+  position: relative;
+  cursor: pointer;
+  transition-duration: 0.2s;
+  box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.116);
+  padding-left: 1rem;
+  transition-duration: 0.5s;
+}
+
+.svgIcon {
+  height: 25px;
+  transition-duration: 1.5s;
+}
+
+.bell path {
+  fill: rgb(19, 19, 19);
+}
+
+.buttonToTourPackage:hover {
+  background-color: rgb(192, 255, 20);
+  transition-duration: 0.5s;
+}
+
+.buttonToTourPackage:active {
+  transform: scale(0.97);
+  transition-duration: 0.2s;
+}
+
+.buttonToTourPackage:hover .svgIcon {
+  transform: rotate(250deg);
+  transition-duration: 1.5s;
+}
+
+/* Button Style For Tour Package End */
+
+.max-layout {
+  max-width: 1500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.fade-to-left {
+  /* background: linear-gradient(to bottom, #0000006b 50% #00000080 50%); */
+  background-image: linear-gradient(to left, #0000001e, #000000e8);
+}
+
+.clip-path {
+  clip-path: polygon(8% 20%, 100% 0, 100% 100%, 8% 76%);
+
+  /* clip-path: polygon(0 0, 100% 20%, 100% 76%, 0 100%); */
+}
+
+.animation-come-from-right1 {
+  animation: comeFormRight 1s ease-in;
+}
+
+@keyframes comeFormRight {
+  0% {
+    transform: translateX(500px);
+  }
+
+  100% {
+    transform: translateX(0px);
+  }
+}
+
+.animation-come-from-right2 {
+  animation: comeFormRight2 1s ease-in;
+  animation-delay: 0.5s;
+}
+
+@keyframes comeFormRight2 {
+  0% {
+    transform: translateX(500px);
+  }
+
+  100% {
+    transform: translateX(0px);
+  }
+}
+
+
+.animation-come-from-right3 {
+  animation: comeFormRight3 1s ease-in;
+  animation-delay: 0.8s;
+}
+
+@keyframes comeFormRight3 {
+  0% {
+    transform: translateX(500px);
+  }
+
+  100% {
+    transform: translateX(0px);
+  }
+}
+
+
+.blueGBtn { 
+  background-color: #0078d0;
+}
+
+.goldenGBtn { 
+  background-color: #F78E2A;
+}
+
+.skyBlueGBtn { 
+  background-color: #41B3DB;
+}
+
+.greenGBtn {
+  background-color: #7F9504;
+}
+
+.gBtn {
+  border: 0;
+  border-radius: 100px;
+  color: #fff;
+  cursor: pointer;
+  display: inline-block;
+  /* font-family: system-ui,-apple-system,system-ui,"Segoe UI",Roboto,Ubuntu,"Helvetica Neue",sans-serif; */
+  font-size: 18px;
+  font-weight: 600;
+  outline: 0;
+  padding: 8px 15px;
+  position: relative;
+  text-align: center;
+  text-decoration: none;
+  transition: all .3s;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+.gBtn:before {
+  background-color: initial;
+  background-image: linear-gradient(#fff 0, rgba(255, 255, 255, 0) 100%);
+  border-radius: 125px;
+  content: "";
+  height: 50%;
+  left: 4%;
+  opacity: .5;
+  position: absolute;
+  top: 0;
+  transition: all .3s;
+  width: 92%;
+}
+
+.gBtn:hover {
+  box-shadow: rgba(255, 255, 255, .2) 0 3px 15px inset, rgba(0, 0, 0, .1) 0 3px 5px, rgba(0, 0, 0, .1) 0 10px 13px;
+  transform: scale(1.05);
+}
+
+@media (min-width: 768px) {
+  .gBtn {
+    padding: 8px 15px;
+  }
+}
