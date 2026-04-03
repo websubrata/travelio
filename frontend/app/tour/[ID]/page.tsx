@@ -11,18 +11,35 @@ import { API_BASE_URL } from "@/app/constant";
 import { ITours } from "@/app/types";
 import { TOURS_META_INFO } from "@/app/constant";
 import BookTourForm from "@/app/components/BookTourForm";
+import { notFound } from "next/navigation";
 
 async function page({ params }: { params: { ID: string } }) {
   const URL = `${API_BASE_URL}/tour/${params.ID}`;
 
+  // Fetch tourinfo (rich HTML description)
   const response = await fetch(URL, { cache: "no-store" });
-  const tour = await response.json();
+  const tourInfo = await response.json();
 
+  // Fetch basic tour data (TITLE, IMG, PRICE, etc.)
   const tourResponse = await fetch(
     `${API_BASE_URL}/tour/${params.ID}?tableName=tour`,
     { cache: "no-store" }
   );
   const tourResult = (await tourResponse.json()) as ITours;
+
+  // If core tour data is missing, show 404
+  if (!tourResult || Array.isArray(tourResult)) {
+    notFound();
+  }
+
+  // tourinfo may be empty (returns []). Fall back to tour collection fields.
+  const isTourInfoEmpty = Array.isArray(tourInfo) || !tourInfo?.title;
+  const tour = {
+    title: isTourInfoEmpty ? tourResult.TITLE : tourInfo.title,
+    htmlDescription: isTourInfoEmpty
+      ? (tourResult as any).DESCRIPTION || ""
+      : tourInfo.htmlDescription || "",
+  };
 
   const metaInfo = TOURS_META_INFO.find(
     (info) => info.tourtitle === tourResult.TITLE
@@ -66,8 +83,8 @@ async function page({ params }: { params: { ID: string } }) {
 
       <section className="w-full">
         <PageIntroBanner
-          alt={tour.title}
-          src={tourResult.IMG}
+          alt={tour.title || "Tour Banner"}
+          src={tourResult?.IMG || "/gallery.jpg"}
           className="h-72 object-cover"
         />
 

@@ -138,7 +138,16 @@ app.get("/tour/:URL", async (req, res) => {
     const snapshot = await getDocs(q);
     if (snapshot.empty) return res.status(200).json([]);
     const d = snapshot.docs[0];
-    res.status(200).json({ ID: d.id, ...d.data() });
+    const data = d.data();
+    // Strip carriage-return characters (\r) that were stored in Firestore,
+    // which otherwise appear as literal "rn" in rendered HTML content.
+    const sanitized = Object.fromEntries(
+      Object.entries(data).map(([k, v]) => [
+        k,
+        typeof v === "string" ? v.replace(/\r\n/g, "\n").replace(/\r/g, "\n") : v,
+      ])
+    );
+    res.status(200).json({ ID: d.id, ...sanitized });
   } catch (error) {
     res.status(200).json([]);
   }

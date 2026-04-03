@@ -107,19 +107,18 @@ function Navbar() {
           })}
         </nav>
 
-        {isNavMenuVisiable ? (
+        <span className="hidden sm:block">
           <IoCloseOutline
             onClick={() => setIsNavMenuVisiale(false)}
             size={32}
-            className="hidden sm:block text-gray-600"
+            className={`text-gray-600 ${isNavMenuVisiable ? "block" : "hidden"}`}
           />
-        ) : (
           <IoIosMenu
             onClick={() => setIsNavMenuVisiale(true)}
             size={38}
-            className="hidden sm:block text-gray-600"
+            className={`text-gray-600 ${isNavMenuVisiable ? "hidden" : "block"}`}
           />
-        )}
+        </span>
       </header>
     </>
   );
