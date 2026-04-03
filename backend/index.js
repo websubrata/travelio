@@ -1,133 +1,152 @@
 const express = require("express");
 const app = express();
-const dotenv = require("dotenv").config();
-const { query } = require("./database");
+const { db } = require("./firebase");
 const ApiResponse = require("./utils/ApiResponse");
 const { sendMail } = require("./utils/sendMail");
 const cors = require("cors");
 const multer = require("multer");
-const { upload } = require("./multer/multer");
-const cheerio = require("cheerio");
-const request = require("request");
-const mysql = require("mysql2/promise");
+const cloudinary = require("cloudinary").v2;
 
-const totalPagesCache = new Map();
+const {
+  collection,
+  getDocs,
+  getDoc,
+  addDoc,
+  updateDoc,
+  query,
+  where,
+  limit,
+  doc,
+} = require("firebase/firestore");
+
+// ── Cloudinary Config (hardcoded) ────────────────────────────────────────────
+// The user provided the API Key and Secret, relying on environment for Cloud Name 
+// but defaulting just in case.
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || "dzvtqjixk", // Just as an example placeholder! You MUST provide your actual Cloud Name in .env or the frontend wouldn't load images
+  api_key: "763569853232443",
+  api_secret: "6MNGty4e5rxtEQQv2aK4I20KC0E",
+});
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1000 * 1000 },
+});
 
 app.use(express.json());
 app.use(cors());
 
+function uploadToCloudinary(buffer, folder = "tours") {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder, upload_preset: "holla_images" },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result.secure_url);
+      }
+    );
+    stream.end(buffer);
+  });
+}
+
+function snapshotToArray(snapshot) {
+  return snapshot.docs.map((d) => ({ ID: d.id, ...d.data() }));
+}
+
+// ── GET /tours ────────────────────────────────────────────────────────────────
 app.get("/tours", async (req, res) => {
-  // if (!req.query.page)
-  //   return res
-  //     .status(400)
-  //     .json(new ApiResponse(400, "'page' query is require"));
-
-  // const page = parseInt(req.query.page);
   const catname = req.query.catname;
-  const table_name = "tour";
-  const limit = 12;
-
-  const conditianalQuery = catname ? `WHERE TOUR_TYPE='${catname}'` : "";
-
   try {
-    // const totalDocuments = await query(
-    //   `SELECT COUNT(*) AS total_rows FROM ${table_name} ${conditianalQuery}`
-    // );
-    // const totalPages = Math.ceil(totalDocuments[0].total_rows / limit);
-
-    // const skip = (page - 1) * limit;
-
-    const result = await query(
-      `SELECT * FROM ${table_name} ${conditianalQuery}`
-    );
-    res.status(200).json(
-      new ApiResponse(200, "Success", {
-        tours: result,
-      })
-    );
+    const colRef = collection(db, "tour");
+    const q = catname
+      ? query(colRef, where("TOUR_TYPE", "==", catname))
+      : colRef;
+    const snapshot = await getDocs(q);
+    const tours = snapshotToArray(snapshot);
+    res.status(200).json(new ApiResponse(200, "Success", { tours }));
   } catch (error) {
     res.status(400).json(new ApiResponse(400, error.message, error));
   }
 });
 
+// ── GET /tourslugs ────────────────────────────────────────────────────────────
 app.get("/tourslugs", async (req, res) => {
-  const table_name = "tour";
-
   try {
-    const result = await query(`SELECT URL FROM ${table_name}`);
-    res.status(200).json(new ApiResponse(200, "Success", result));
+    const snapshot = await getDocs(collection(db, "tour"));
+    const slugs = snapshot.docs.map((d) => ({ URL: d.data().URL }));
+    res.status(200).json(new ApiResponse(200, "Success", slugs));
   } catch (error) {
     res.status(400).json(new ApiResponse(400, error.message, error));
   }
 });
 
+// ── GET /query ────────────────────────────────────────────────────────────────
 app.get("/query", async (req, res) => {
   const tour_type = req.query.tour_type;
-
-  const table_name = "tour";
-  const result = await query(
-    `SELECT * FROM ${table_name} WHERE TOUR_TYPE = '${tour_type}' LIMIT 12 OFFSET 0`
-  );
-
-  res.status(200).json(
-    new ApiResponse(200, "Success", {
-      tours: result,
-      total_page: 1,
-    })
-  );
+  try {
+    const q = query(
+      collection(db, "tour"),
+      where("TOUR_TYPE", "==", tour_type),
+      limit(12)
+    );
+    const snapshot = await getDocs(q);
+    const tours = snapshotToArray(snapshot);
+    res.status(200).json(
+      new ApiResponse(200, "Success", { tours, total_page: 1 })
+    );
+  } catch (error) {
+    res.status(400).json(new ApiResponse(400, error.message, error));
+  }
 });
 
+// ── GET /search ───────────────────────────────────────────────────────────────
 app.get("/search", async (req, res) => {
   const searchtxt = req.query.q;
-
-  const table_name = "tour";
-
   if (!searchtxt)
     return res
       .status(400)
       .json(new ApiResponse(400, "enter some search text with 'q' tag"));
 
-  // const sql = `SELECT * FROM ${table_name} WHERE MATCH(TITLE) AGAINST('${searchtxt}')`;
-  let sql = `SELECT * FROM ${table_name} WHERE tour.TITLE LIKE ?`;
-  // const totalDocuments = await query(sql);
-
-  // console.log(totalDocuments);
-
-  // const totalPages = Math.ceil(totalDocuments[0]?.total_rows / limit);
-  // const skip = (page - 1) * limit;
-
-  // sql = `SELECT * FROM tour WHERE tour.TITLE LIKE '${searchtxt}'`;
-
-  const result = await query(sql, [`%${searchtxt}%`]);
-  // const result = await query(sql, []);
-  res.status(200).json(
-    new ApiResponse(200, "Success", {
-      tours: result,
-      total_page: 1,
-    })
-  );
+  try {
+    const snapshot = await getDocs(collection(db, "tour"));
+    const lower = searchtxt.toLowerCase();
+    const tours = snapshotToArray(snapshot).filter(
+      (t) => t.TITLE && t.TITLE.toLowerCase().includes(lower)
+    );
+    res.status(200).json(
+      new ApiResponse(200, "Success", { tours, total_page: 1 })
+    );
+  } catch (error) {
+    res.status(400).json(new ApiResponse(400, error.message, error));
+  }
 });
 
+// ── GET /tour/:URL ────────────────────────────────────────────────────────────
 app.get("/tour/:URL", async (req, res) => {
-  const tour_title = req.params.URL;
+  const tour_url = req.params.URL;
   const table_name = req.query.tableName || "tourinfo";
 
-  if (!tour_title)
-    return res.status(400).json(new ApiResponse(400, "TITLE is required"));
-
-  const sql = `SELECT * FROM ${table_name} WHERE ${table_name}.URL = ?`;
+  if (!tour_url)
+    return res.status(400).json(new ApiResponse(400, "URL is required"));
 
   try {
-    const result = await query(sql, [tour_title]);
-    res.status(200).json(result[0]);
+    const q = query(
+      collection(db, table_name),
+      where("URL", "==", tour_url),
+      limit(1)
+    );
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) return res.status(200).json([]);
+    const d = snapshot.docs[0];
+    res.status(200).json({ ID: d.id, ...d.data() });
   } catch (error) {
     res.status(200).json([]);
   }
 });
 
+// ── POST /sendemail ───────────────────────────────────────────────────────────
 app.post("/sendemail", async (req, res) => {
   const type = req.body.type;
-
   if (!type)
     return res
       .status(400)
@@ -164,19 +183,6 @@ app.post("/sendemail", async (req, res) => {
     }
   }
 
-  // if (type === "rewards") {
-  //   try {
-  //     await sendMail(type, {
-  //       name: req.body.name,
-  //       number: req.body.number,
-  //       message: req.body.destination,
-  //       toEmail: req.body.email,
-  //     });
-  //   } catch (error) {
-  //     return res.status(400).json(new ApiResponse(200, "Something went wrong while sending email"));
-  //   }
-  // }
-
   if (type === "book-tour") {
     try {
       await sendMail(type, {
@@ -194,173 +200,100 @@ app.post("/sendemail", async (req, res) => {
   res.status(200).json(new ApiResponse(200, "Email Has Sended Successfully"));
 });
 
+// ── GET /filter ───────────────────────────────────────────────────────────────
 app.get("/filter", async (req, res) => {
-  const table_name = "tour";
   const duration = req.query.duration;
   const category = req.query.category;
 
-  // const LIMIT = 5;
+  try {
+    let q;
+    const colRef = collection(db, "tour");
 
-  // const durations = Array.isArray(req.query.duration || [])
-  //   ? req.query.duration
-  //   : [req.query.duration];
-  // const tourTypes = Array.isArray(req.query["tour-type"] || [])
-  //   ? req.query["tour-type"]
-  //   : [req.query["tour-type"]];
+    if (duration && category) {
+      q = query(
+        colRef,
+        where("TOUR_TYPE", "==", category),
+        where("TIME", "==", duration)
+      );
+    } else if (category) {
+      q = query(colRef, where("TOUR_TYPE", "==", category));
+    } else if (duration) {
+      q = query(colRef, where("TIME", "==", duration));
+    } else {
+      q = colRef;
+    }
 
-  // let tourTypesTxt = null;
-  // tourTypes?.forEach((element) => {
-  //   if (!tourTypesTxt) {
-  //     tourTypesTxt = `'${element}'`;
-  //   } else {
-  //     tourTypesTxt += `,'${element}'`;
-  //   }
-  // });
-
-  // let durationTxt = null;
-  // durations?.forEach((element) => {
-  //   if (!durationTxt) {
-  //     durationTxt = `'${element}'`;
-  //   } else {
-  //     durationTxt += `,'${element}'`;
-  //   }
-  // });
-
-  // let newSql = `SELECT * FROM ${table_name} WHERE TOUR_TYPE IN (${tourTypesTxt}) ${
-  //   durationTxt ? `AND TIME IN (${durationTxt})` : ""
-  // }`;
-  // // console.log(newSql);
-
-  // let sql = `SELECT * FROM ${table_name}`;
-
-  // if (!tourTypesTxt && durationTxt) {
-  //   sql += ` WHERE TIME IN (${durationTxt})`;
-  // }
-
-  // if (tourTypesTxt && !durationTxt) {
-  //   sql += ` WHERE TOUR_TYPE IN (${tourTypesTxt})`;
-  // }
-
-  // if (tourTypesTxt && durationTxt) {
-  //   sql += ` WHERE TOUR_TYPE IN (${tourTypesTxt}) AND TIME IN (${durationTxt})`;
-  // }
-
-  let sql = `SELECT * FROM ${table_name}`;
-
-  if (duration && category) {
-    sql += ` WHERE TOUR_TYPE IN ('${category}') AND TIME IN ('${duration}')`;
+    const snapshot = await getDocs(q);
+    const tours = snapshotToArray(snapshot);
+    res.status(200).json(
+      new ApiResponse(200, "Success", { tours, total_page: 1 })
+    );
+  } catch (error) {
+    res.status(400).json(new ApiResponse(400, error.message, error));
   }
-
-  if (!duration && category) {
-    sql += ` WHERE TOUR_TYPE IN ('${category}')`;
-  }
-
-  if (duration && !category) {
-    sql += ` WHERE TOUR_TYPE IN ('${category}')`;
-  }
-
-  const result = await query(sql);
-  res.status(200).json(
-    new ApiResponse(200, "Success", {
-      tours: result,
-      total_page: 1,
-    })
-  );
 });
 
-app.get("/add-slugs", async (req, res) => {
-  function slugify(text) {
-    return text
-      .toString()
-      .toLowerCase()
-      .trim()
-      .replace(/[\s\W-]+/g, "-") // Replace spaces & non-word chars with "-"
-      .replace(/^-+|-+$/g, ""); // Remove leading/trailing hyphens
+// ── POST /upload-image ────────────────────────────────────────────────────────
+app.post("/upload-image", upload.single("image"), async (req, res) => {
+  if (!req.file)
+    return res.status(400).json(new ApiResponse(400, "No image file provided"));
+  try {
+    const url = await uploadToCloudinary(req.file.buffer);
+    res
+      .status(200)
+      .json(new ApiResponse(200, "Image uploaded successfully", { url }));
+  } catch (error) {
+    res.status(400).json(new ApiResponse(400, error.message, error));
   }
-
-  const HOST = process.env.DB_HOST;
-  const USER = process.env.DB_USER;
-  const PASS = process.env.DB_PASSWORD;
-  const DB = process.env.DATABASE;
-  const DB_PORT = process.env.DB_PORT;
-
-  const connection = await mysql.createConnection({
-    host: HOST,
-    port: DB_PORT,
-    user: USER,
-    password: PASS,
-    database: DB,
-    connectTimeout: 60000,
-  });
-
-  // 1. Fetch all titles
-  const [rows] = await connection.execute("SELECT ID, TITLE FROM tour");
-
-  // 2. Prepare bulk update
-  const updates = rows.map((row) => ({
-    id: row.ID,
-    slug: slugify(row.TITLE),
-  }));
-
-  // 3. Execute updates in batches (safely)
-  for (const update of updates) {
-    await connection.execute("UPDATE tour SET URL = ? WHERE ID = ?", [
-      update.slug,
-      update.id,
-    ]);
-  }
-
-  await connection.end();
-  // console.log('All slugs updated successfully.');
-  res.send("DONE");
 });
 
-app.get("/add-slugs-2", async (req, res) => {
-  function slugify(text) {
-    return text
-      .toString()
-      .toLowerCase()
-      .trim()
-      .replace(/[\s\W-]+/g, "-") // Replace spaces & non-word chars with "-"
-      .replace(/^-+|-+$/g, ""); // Remove leading/trailing hyphens
+// ── POST /tour  (add new tour) ────────────────────────────────────────────────
+app.post("/tour", upload.single("image"), async (req, res) => {
+  try {
+    let imgUrl = req.body.IMG || "";
+    if (req.file) imgUrl = await uploadToCloudinary(req.file.buffer);
+
+    const tourData = {
+      IMG: imgUrl,
+      TITLE: req.body.TITLE || "",
+      TIME: req.body.TIME || "",
+      PRICE: req.body.PRICE || "",
+      DATE: Date.now(),
+      DESCRIPTION: req.body.DESCRIPTION || "",
+      TOUR_TYPE: req.body.TOUR_TYPE || "",
+      TAGS: req.body.TAGS || "",
+      URL: req.body.URL || slugify(req.body.TITLE || ""),
+    };
+
+    const docRef = await addDoc(collection(db, "tour"), tourData);
+    res
+      .status(200)
+      .json(new ApiResponse(200, "Tour added", { ID: docRef.id, ...tourData }));
+  } catch (error) {
+    res.status(400).json(new ApiResponse(400, error.message, error));
   }
-
-  const HOST = process.env.DB_HOST;
-  const USER = process.env.DB_USER;
-  const PASS = process.env.DB_PASSWORD;
-  const DB = process.env.DATABASE;
-  const DB_PORT = process.env.DB_PORT;
-
-  const connection = await mysql.createConnection({
-    host: HOST,
-    port: DB_PORT,
-    user: USER,
-    password: PASS,
-    database: DB,
-    connectTimeout: 60000,
-  });
-
-  // 1. Fetch all titles
-  const [rows] = await connection.execute("SELECT ID, title FROM tourinfo");
-
-  // 2. Prepare bulk update
-  const updates = rows.map((row) => ({
-    id: row.ID,
-    slug: slugify(row.title),
-  }));
-
-  // 3. Execute updates in batches (safely)
-  for (const update of updates) {
-    await connection.execute("UPDATE tourinfo SET URL = ? WHERE ID = ?", [
-      update.slug,
-      update.id,
-    ]);
-  }
-
-  await connection.end();
-  // console.log('All slugs updated successfully.');
-  res.send("DONE 2");
 });
 
+// ── PUT /tour/:ID  (update tour) ──────────────────────────────────────────────
+app.put("/tour/:ID", upload.single("image"), async (req, res) => {
+  const tourID = req.params.ID;
+  try {
+    const updateData = { ...req.body };
+    if (req.file) updateData.IMG = await uploadToCloudinary(req.file.buffer);
+    await updateDoc(doc(db, "tour", tourID), updateData);
+    res.status(200).json(new ApiResponse(200, "Tour updated"));
+  } catch (error) {
+    res.status(400).json(new ApiResponse(400, error.message, error));
+  }
+});
 
-app.listen(8080, console.log("http://localhost:8080"));
+function slugify(text) {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/[\s\W-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+app.listen(8080, () => console.log("✅  Backend running → http://localhost:8080"));

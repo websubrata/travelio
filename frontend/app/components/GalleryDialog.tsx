@@ -32,13 +32,15 @@ function GalleryDialog() {
           color="#fff"
           size={28}
         />
-        <Image
-          className="w-full h-full object-contain"
-          src={img}
-          alt=""
-          height={1200}
-          width={1200}
-        />
+        {img && (
+          <Image
+            className="w-full h-full object-contain"
+            src={img}
+            alt="Gallery Preview"
+            height={1200}
+            width={1200}
+          />
+        )}
       </div>
     </section>
   );

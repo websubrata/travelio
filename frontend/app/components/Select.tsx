@@ -13,12 +13,13 @@ function Select(props: IProps) {
   return (
     <div className={`py-1 px-2 font-[600] text-sm  ${props.className}`}>
       <select
+        defaultValue=""
         ref={props.referal}
         title={props.name + " Drop Down Menu"}
         name={props.name}
         className={`outline-none w-full cursor-pointer ${props.selectClassName}`}
       >
-        <option value="" disabled selected>
+        <option value="" disabled>
           {props.title}
         </option>
         {props.options.map((eachItem) => (

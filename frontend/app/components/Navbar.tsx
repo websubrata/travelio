@@ -58,38 +58,53 @@ function Navbar() {
             isNavMenuVisiable ? "sm:flex h-auto" : "sm:hidden h-0"
           } sm:right-0 sm:gap-3 sm:bg-white sm:top-16 sm:items-start sm:py-2 sm:px-4 sm:border sm:shadow transition-all duration-500`}
         >
-          {navOptions.map((item, index) => (
-            <Link
-              onClick={() => (item.child ? null : setIsNavMenuVisiale(false))}
-              key={index}
-              href={item.child ? "#" : item.path}
-              className={`font-medium text-[14px] relative ${
-                pathname === item.path ? "text-black" : "text-[#94999F]"
-              }  transition-all duration-300 group/parentnavitem`}
-            >
-              <div className="flex items-center gap-x-3">
-                {item.name}
-                {item.child ? <FaCaretDown /> : null}
-              </div>
+          {navOptions.map((item, index) => {
+            if (item.child) {
+              return (
+                <div
+                  key={index}
+                  className={`font-medium text-[14px] relative cursor-pointer ${
+                    pathname.startsWith(item.path) ? "text-black" : "text-[#94999F]"
+                  }  transition-all duration-300 group/parentnavitem`}
+                >
+                  <div className="flex items-center gap-x-3">
+                    {item.name}
+                    <FaCaretDown />
+                  </div>
 
-              {item.child ? (
-                <div className="absolute invisible group-hover/parentnavitem:visible md:group-focus-within/parentnavitem:visible sm:group-focus-within/parentnavitem:visible z-[99999]">
-                  <div className="w-40 relative top-3 bg-white shadow-md z-[99999]">
-                    {item.child.map((cItem) => (
-                      <Link
-                        onClick={() => setIsNavMenuVisiale(false)}
-                        key={cItem.path}
-                        className="block px-3 py-2 hover:bg-slate-300 text-black"
-                        href={cItem.path}
-                      >
-                        {cItem.name}
-                      </Link>
-                    ))}
+                  <div className="absolute invisible group-hover/parentnavitem:visible md:group-focus-within/parentnavitem:visible sm:group-focus-within/parentnavitem:visible z-[99999]">
+                    <div className="w-40 relative top-3 bg-white shadow-md z-[99999] flex flex-col">
+                      {item.child.map((cItem) => (
+                        <Link
+                          onClick={() => setIsNavMenuVisiale(false)}
+                          key={cItem.path}
+                          className="block px-3 py-2 hover:bg-slate-300 text-black"
+                          href={cItem.path}
+                        >
+                          {cItem.name}
+                        </Link>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              ) : null}
-            </Link>
-          ))}
+              );
+            }
+
+            return (
+              <Link
+                onClick={() => setIsNavMenuVisiale(false)}
+                key={index}
+                href={item.path}
+                className={`font-medium text-[14px] relative ${
+                  pathname === item.path ? "text-black" : "text-[#94999F]"
+                }  transition-all duration-300 group/parentnavitem`}
+              >
+                <div className="flex items-center gap-x-3">
+                  {item.name}
+                </div>
+              </Link>
+            );
+          })}
         </nav>
 
         {isNavMenuVisiable ? (
