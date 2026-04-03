@@ -216,7 +216,7 @@ async function page({ params, searchParams }: IProps) {
   }
   
 
-  const response = await fetch(URL);
+  const response = await fetch(URL, { cache: "no-store" });
   if(!response.ok) {
     return <h2>{await response.statusText}</h2>
   }

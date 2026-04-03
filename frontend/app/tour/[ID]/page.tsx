@@ -15,11 +15,12 @@ import BookTourForm from "@/app/components/BookTourForm";
 async function page({ params }: { params: { ID: string } }) {
   const URL = `${API_BASE_URL}/tour/${params.ID}`;
 
-  const response = await fetch(URL);
+  const response = await fetch(URL, { cache: "no-store" });
   const tour = await response.json();
 
   const tourResponse = await fetch(
-    `${API_BASE_URL}/tour/${params.ID}?tableName=tour`
+    `${API_BASE_URL}/tour/${params.ID}?tableName=tour`,
+    { cache: "no-store" }
   );
   const tourResult = (await tourResponse.json()) as ITours;
 
